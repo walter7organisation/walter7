@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>walter7</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0d0d0d;
+      color: #e8e8e8;
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      font-size: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 32px;
+    }
+
+    h1 {
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 28px;
+      color: #ffffff;
+    }
+
+    .hero-img {
+      width: 220px;
+      height: 220px;
+      object-fit: cover;
+      border-radius: 16px;
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-size: 15px;
+      color: #888;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      align-self: flex-start;
+      max-width: 960px;
+      width: 100%;
+    }
+
+    .banners {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 960px;
+      margin-bottom: 12px;
+    }
+
+    .banner {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 22px 26px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .banner:hover {
+      background: #222;
+      border-color: #444;
+    }
+
+    .banner-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .banner-desc {
+      font-size: 17px;
+      color: #aaa;
+      line-height: 1.4;
+    }
+
+    .tag {
+      font-size: 13px;
+      background: #2a2a2a;
+      color: #777;
+      border-radius: 6px;
+      padding: 2px 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .banner.no-link {
+      cursor: default;
+    }
+
+    .banner.no-link:hover {
+      background: #1a1a1a;
+      border-color: #2a2a2a;
+    }
+
+    .collab-section {
+      width: 100%;
+      max-width: 960px;
+      margin-top: 32px;
+    }
+
+    .footer {
+      margin-top: auto;
+      padding-top: 48px;
+      font-size: 17px;
+      color: #666;
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer a {
+      color: #888;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer a:hover {
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>walter7</h1>
+  <img class="hero-img" src="653027712_18076082336625840_933057962563754656_n.jpg" alt="walter7">
+
+  <div class="banners">
+    <a class="banner" href="https://github.com/walter7organisation/walter7addons" target="_blank" rel="noopener">
+      <div class="banner-content">
+        <div class="banner-title">walter7addons</div>
+        <div class="banner-desc">chattriggers mod with quality of life features for hypixel bedwars and skyblock</div>
+      </div>
+      <span class="tag">old</span>
+    </a>
+
+    <a class="banner" href="https://github.com/walter7organisation/walter7brainrot" target="_blank" rel="noopener">
+      <div class="banner-content">
+        <div class="banner-title">walter7brainrot</div>
+        <div class="banner-desc">program that lets u scroll tiktok, reels or yt shorts while in bedwars/skywars queue</div>
+      </div>
+      <span class="tag">max ai generated</span>
+    </a>
+
+    <div class="banner no-link">
+      <div class="banner-content">
+        <div class="banner-title">walter7proxy</div>
+        <div class="banner-desc">minecraft proxy server for hypixel that allows for custom addons</div>
+      </div>
+      <span class="tag">coming soon</span>
+    </div>
+  </div>
+
+  <div class="collab-section">
+    <div class="section-label">collaborated projects</div>
+    <div class="banners" style="margin-bottom: 0;">
+      <a class="banner" href="https://docs.seraph.si/docs/introduction" target="_blank" rel="noopener">
+        <div class="banner-content">
+          <div class="banner-title">seraph</div>
+          <div class="banner-desc">hypixel overlay and quality of life mod that includes an (almost) full port of walter7addons</div>
+        </div>
+      </a>
+
+      <div class="banner no-link">
+        <div class="banner-content">
+          <div class="banner-title">rubs</div>
+          <div class="banner-desc">coming soon...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <a href="https://www.youtube.com/@Jqsie" target="_blank" rel="noopener">josie</a>
+    <a href="https://www.youtube.com/@librarby" target="_blank" rel="noopener">diboof</a>
+    <a href="https://docs.seraph.si/docs/introduction" target="_blank" rel="noopener">ref</a>
+  </footer>
+
+</body>
+</html>
