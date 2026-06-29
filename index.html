@@ -39,6 +39,65 @@
       margin-bottom: 48px;
     }
 
+    .proxy-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 48px;
+      width: 100%;
+      max-width: 260px;
+    }
+
+    .proxy-title {
+      font-size: 15px;
+      color: #888;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    .copy-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+
+    .copy-box:hover {
+      background: #222;
+      border-color: #444;
+    }
+
+    .copy-box .copy-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      font-family: 'Consolas', 'Menlo', monospace;
+    }
+
+    .copy-box .copy-icon {
+      width: 16px;
+      height: 16px;
+      stroke: #888;
+      flex-shrink: 0;
+      transition: stroke 0.15s;
+    }
+
+    .copy-box:hover .copy-icon {
+      stroke: #ccc;
+    }
+
+    .copy-box.copied .copy-icon {
+      stroke: #4caf50;
+    }
+
     .section-label {
       font-size: 15px;
       color: #888;
@@ -140,6 +199,17 @@
   <h1>walter7</h1>
   <img class="hero-img" src="653027712_18076082336625840_933057962563754656_n.jpg" alt="walter7">
 
+  <div class="proxy-section">
+    <div class="proxy-title">Sydney Hypixel Proxy</div>
+    <div class="copy-box" id="copyBox" title="Click to copy">
+      <span class="copy-text" id="copyText">syd.walter7.lol</span>
+      <svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </div>
+  </div>
+
   <div class="banners">
     <a class="banner" href="https://github.com/walter7organisation/walter7addons" target="_blank" rel="noopener">
       <div class="banner-content">
@@ -190,6 +260,40 @@
     <a href="https://www.youtube.com/@librarby" target="_blank" rel="noopener">diboof</a>
     <a href="https://docs.seraph.si/docs/introduction" target="_blank" rel="noopener">ref</a>
   </footer>
+
+  <script>
+    (function () {
+      var box = document.getElementById('copyBox');
+      var textEl = document.getElementById('copyText');
+      var value = textEl.textContent.trim();
+
+      function highlight() {
+        var range = document.createRange();
+        range.selectNodeContents(textEl);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      function showCopied() {
+        box.classList.add('copied');
+        setTimeout(function () { box.classList.remove('copied'); }, 1200);
+      }
+
+      box.addEventListener('click', function () {
+        highlight();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(value).then(showCopied).catch(function () {
+            document.execCommand('copy');
+            showCopied();
+          });
+        } else {
+          document.execCommand('copy');
+          showCopied();
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>
