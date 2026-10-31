@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>walter7 ping</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0d0d0d;
+      color: #e8e8e8;
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      font-size: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 32px;
+    }
+
+    h1 {
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .proxy-title {
+      font-size: 15px;
+      color: #888;
+      letter-spacing: 0.05em;
+      margin-bottom: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4caf50;
+      display: inline-block;
+    }
+
+    .dot.stale { background: #ffb300; }
+    .dot.down  { background: #f44336; }
+
+    .banners {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 32px;
+    }
+
+    .banner {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 22px 26px;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .banner-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .banner-title {
+      font-size: 15px;
+      color: #888;
+      letter-spacing: 0.05em;
+    }
+
+    .banner-ping {
+      font-size: 42px;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'Consolas', 'Menlo', monospace;
+      line-height: 1;
+    }
+
+    .banner-ping .unit {
+      font-size: 20px;
+      font-weight: 400;
+      color: #888;
+    }
+
+    .banner-ping.down {
+      color: #f44336;
+      font-size: 24px;
+    }
+
+    .banner-stats {
+      font-size: 14px;
+      color: #aaa;
+      font-family: 'Consolas', 'Menlo', monospace;
+      line-height: 1.7;
+    }
+
+    .banner-stats b {
+      color: #e8e8e8;
+      font-weight: 600;
+    }
+
+    .spark {
+      width: 100%;
+      height: 40px;
+    }
+
+    .footer-note {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .player-path .banner-ping { color: #7ec8ff; }
+
+    footer.footer {
+      margin-top: 16px;
+      display: flex;
+      gap: 24px;
+    }
+
+    footer.footer a {
+      color: #888;
+      text-decoration: none;
+      font-size: 15px;
+      transition: color 0.15s;
+    }
+
+    footer.footer a:hover { color: #ffffff; }
+  </style>
+</head>
+<body>
+
+  <h1>walter7</h1>
+  <div class="proxy-title">
+    <span class="dot" id="statusDot"></span>
+    <span>proxy chain ping &mdash; live</span>
+  </div>
+
+  <div class="banners" id="legs"></div>
+
+  <div class="footer-note" id="updated">connecting&hellip;</div>
+
+  <footer class="footer">
+    <a href="https://walter7.lol" target="_blank" rel="noopener">walter7.lol</a>
+    <a href="https://www.youtube.com/@Jqsie" target="_blank" rel="noopener">josie</a>
+    <a href="https://www.youtube.com/@librarby" target="_blank" rel="noopener">diboof</a>
+  </footer>
+
+  <script>
+    var API_BASE = 'https://ping.walter7.lol';
+    function ms(v) {
+      return v == null ? '&ndash;' : (Math.round(v * 10) / 10) + '<span class="unit"> ms</span>';
+    }
+
+    function fmtAvg(v) {
+      return v == null ? '&ndash;' : (Math.round(v * 10) / 10);
+    }
+
+    function sparkSvg(points) {
+      if (!points || points.length < 2) return '';
+      var w = 560, h = 40, pad = 2;
+      var vals = points.map(function (p) { return p.ms; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      if (hi - lo < 1) hi = lo + 1;
+      var xs = points.map(function (p, i) {
+        var x = pad + (w - 2 * pad) * i / (points.length - 1);
+        var y = h - pad - (h - 2 * pad) * (p.ms - lo) / (hi - lo);
+        return Math.round(x * 10) / 10 + ',' + Math.round(y * 10) / 10;
+      });
+      return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+        '<polyline fill="none" stroke="#7ec8ff" stroke-width="1.5" points="' + xs.join(' ') + '"/></svg>';
+    }
+
+    function ageStr(s) {
+      if (s < 90) return s + 's ago';
+      if (s < 5400) return Math.round(s / 60) + 'm ago';
+      return Math.round(s / 3600) + 'h ago';
+    }
+
+    function legHtml(name, s, highlight) {
+      var ping, cls = '';
+      if (s.last_ok) {
+        ping = ms(s.last_ms);
+      } else {
+        ping = 'failing';
+        cls = 'down';
+      }
+      return '<div class="banner' + (highlight ? ' player-path' : '') + '">' +
+        '<div class="banner-title-row">' +
+        '<div class="banner-title">' + name + '</div>' +
+        '<div class="banner-title">' + ageStr(s.last_age_s) + '</div>' +
+        '</div>' +
+        '<div class="banner-ping ' + cls + '">' + ping + '</div>' +
+        sparkSvg(s.spark) +
+        '<div class="banner-stats">' +
+        '1h <b>' + fmtAvg(s.avg_1h) + '</b> &nbsp; ' +
+        '24h <b>' + fmtAvg(s.avg_24h) + '</b> &nbsp; ' +
+        '7d <b>' + fmtAvg(s.avg_7d) + '</b> &nbsp; ' +
+        'max <b>' + fmtAvg(s.max_24h) + '</b> &nbsp; ' +
+        'min <b>' + fmtAvg(s.min_24h) + '</b> &nbsp; ' +
+        'ok <b>' + (s.ok_24h == null ? '&ndash;' : s.ok_24h + '%') + '</b>' +
+        '</div></div>';
+    }
+
+    function overallDot(data) {
+      var dot = document.getElementById('statusDot');
+      var worst = 'ok';
+      ['syd_vultr', 'vultr_hypixel'].forEach(function (k) {
+        var s = data.legs[k];
+        if (!s) { worst = 'down'; return; }
+        if (!s.last_ok) worst = 'down';
+        else if (s.last_age_s > 90 && worst !== 'down') worst = 'stale';
+      });
+      dot.className = 'dot ' + (worst === 'ok' ? '' : worst);
+    }
+
+    function render(data) {
+      var html = '';
+      var l = data.legs;
+      if (l.syd_vultr && !l.syd_vultr.error)
+        html += legHtml(l.syd_vultr.name, l.syd_vultr, false);
+      else html += '<div class="banner"><div class="banner-title">Sydney -> Vultr</div><div class="banner-ping down">no data</div></div>';
+      if (l.vultr_hypixel && !l.vultr_hypixel.error)
+        html += legHtml(l.vultr_hypixel.name, l.vultr_hypixel, false);
+      else html += '<div class="banner"><div class="banner-title">Vultr -> Hypixel</div><div class="banner-ping down">no data</div></div>';
+      if (data.player_path && data.player_path.last_ms != null)
+        html += legHtml(data.player_path.name, {
+          last_ok: true, last_ms: data.player_path.last_ms,
+          last_age_s: Math.max(l.syd_vultr.last_age_s, l.vultr_hypixel.last_age_s),
+          avg_1h: data.player_path.avg_1h, avg_24h: data.player_path.avg_24h,
+          avg_7d: data.player_path.avg_7d, max_24h: null, min_24h: null,
+          ok_24h: null, spark: null
+        }, true);
+      document.getElementById('legs').innerHTML = html;
+      var t = new Date(data.generated_unix * 1000);
+      document.getElementById('updated').textContent =
+        'updated ' + t.toLocaleTimeString('en-AU', { hour12: false, timeZone: 'Australia/Perth' }) + ' AWST &middot; refreshes every 10s'.replace('&middot;', '·');
+      overallDot(data);
+    }
+
+    function load() {
+      fetch(API_BASE + '/api/stats', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(render)
+        .catch(function () {
+          document.getElementById('updated').textContent = 'api unreachable — retrying…';
+        });
+    }
+
+    load();
+    setInterval(load, 10000);
+  </script>
+
+</body>
+</html>
