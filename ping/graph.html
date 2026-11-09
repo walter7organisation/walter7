@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>walter7 ping / graphs</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #e8e8e8;
+      font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 32px;
+    }
+
+    h1 {
+      font-size: 44px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .sub {
+      font-size: 15px;
+      color: #888;
+      letter-spacing: 0.05em;
+      margin-bottom: 28px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .controls .group {
+      display: flex;
+      gap: 6px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 5px;
+    }
+
+    button {
+      background: transparent;
+      border: none;
+      color: #aaa;
+      font: inherit;
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Consolas', 'Menlo', monospace;
+    }
+
+    button:hover { color: #fff; }
+
+    button.on { background: #2a2a2a; color: #ffffff; }
+
+    button.ctl.on { color: #9be29b; }
+
+    .chart-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 22px 18px 14px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .chart-holder { position: relative; height: 420px; }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 13px;
+      color: #666;
+      font-family: 'Consolas', 'Menlo', monospace;
+      padding: 0 4px 8px;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: #666;
+      margin-top: 14px;
+      max-width: 1100px;
+      line-height: 1.6;
+    }
+
+    .hint b { color: #999; }
+
+    footer.footer { margin-top: 22px; display: flex; gap: 24px; }
+    footer.footer a { color: #888; text-decoration: none; font-size: 14px; }
+    footer.footer a:hover { color: #fff; }
+
+    #loading {
+      font-size: 14px;
+      color: #666;
+      font-family: 'Consolas', 'Menlo', monospace;
+      margin-bottom: 10px;
+      height: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>ping graphs</h1>
+  <div class="sub">proxy chain latency &mdash; historical view</div>
+
+  <div class="controls">
+    <div class="group" id="ranges"></div>
+    <div class="group" id="scales">
+      <button data-scale="linear" class="on">linear</button>
+      <button data-scale="log">log</button>
+    </div>
+    <div class="group" id="legs"></div>
+  </div>
+
+  <div id="loading">loading…</div>
+
+  <div class="chart-card">
+    <div class="meta-row">
+      <span id="meta-left">—</span>
+      <span id="meta-right"></span>
+    </div>
+    <div class="chart-holder"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="hint">
+    <b>Lines:</b> per-bucket median pong. <b>Shaded band:</b> min–max in each bucket.
+    <b><span style="color:#ffb74d">●</span> markers:</b> buckets that trip the spike detector
+    (trailing median &times;1.5 + 30&nbsp;ms, same thresholds as the Discord alerts).
+    <b>Gaps:</b> buckets with 0 successful probes. Times are your local timezone.
+    Control legs ping CubeCraft from each host — they share no path with the main legs,
+    so spikes on a main leg with clean controls point at the shared segment.
+  </div>
+
+  <footer class="footer">
+    <a href="/ping/">live stats</a>
+    <a href="/">walter7.lol</a>
+  </footer>
+
+<script>
+const API_BASE = new URLSearchParams(location.search).get('api') || 'https://ping.walter7.lol';
+
+const LEGS = [
+  { key: 'syd_vultr',      label: 'Syd \u2192 Vultr',        color: '#7ec8ff', control: false, def: true },
+  { key: 'vultr_hypixel',  label: 'Vultr \u2192 Hypixel',    color: '#f48fb1', control: false, def: true },
+  { key: 'player',         label: 'Player path (sum)',       color: '#ffffff', control: false, def: false },
+  { key: 'syd_control',    label: 'Syd \u2192 CubeCraft',    color: '#9be29b', control: true,  def: false },
+  { key: 'vultr_control',  label: 'Vultr \u2192 CubeCraft',  color: '#ffd54f', control: true,  def: false },
+];
+
+const RANGES = [ ['1h', 1], ['6h', 6], ['24h', 24], ['48h', 48], ['7d', 168] ];
+
+let range = 24;
+let scale = 'linear';
+let visible = new Set(LEGS.filter(l => l.def).map(l => l.key));
+let chart = null;
+
+function buildControls() {
+  const rg = document.getElementById('ranges');
+  RANGES.forEach(([label, h]) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if (h === range) b.classList.add('on');
+    b.onclick = () => { range = h; [...rg.children].forEach(x => x.classList.toggle('on', x === b)); load(); };
+    rg.appendChild(b);
+  });
+  const lg = document.getElementById('legs');
+  LEGS.forEach(l => {
+    const b = document.createElement('button');
+    b.textContent = l.label;
+    b.dataset.key = l.key;
+    if (l.control) b.classList.add('ctl');
+    if (visible.has(l.key)) b.classList.add('on');
+    b.onclick = () => {
+      if (visible.has(l.key)) visible.delete(l.key); else visible.add(l.key);
+      b.classList.toggle('on');
+      draw();
+    };
+    lg.appendChild(b);
+  });
+  document.querySelectorAll('#scales button').forEach(b => {
+    b.onclick = () => {
+      scale = b.dataset.scale;
+      document.querySelectorAll('#scales button').forEach(x => x.classList.toggle('on', x === b));
+      draw();
+    };
+  });
+}
+
+function median(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function spikeThreshold(vals) {
+  const med = median(vals);
+  return med * 1.5 + 30;
+}
+
+let latest = null; // { key: {times, avg, p50, min, max, ok, fails, thr, t0, t1} }
+
+async function load() {
+  const el = document.getElementById('loading');
+  el.textContent = 'loading…';
+  try {
+    const res = await fetch(`${API_BASE}/api/series?h=${range}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    latest = {};
+    for (const [key, entry] of Object.entries(d.legs)) {
+      const rows = entry.data;
+      latest[key] = {
+        times:  rows.map(r => r[0] * 1000),
+        avg:    rows.map(r => r[1]),
+        p50:    rows.map(r => r[2]),
+        max:    rows.map(r => r[3]),
+        ok:     rows.map(r => r[5]),
+        fails:  rows.map(r => r[6]),
+      };
+    }
+    const pp = d.player_path.data;
+    latest['player'] = {
+      times: pp.map(r => r[0] * 1000),
+      avg:   pp.map(r => r[1]),
+      p50:   pp.map(r => r[1]),
+      max:   pp.map(r => r[2]),
+      ok:    pp.map(r => r[3]),
+      fails: pp.map(r => r[4]),
+    };
+    const mins = Math.round(d.bucket_s / 60);
+    document.getElementById('meta-left').textContent =
+      `${d.hours}h window \u00b7 ${mins} min buckets \u00b7 all times local`;
+    document.getElementById('meta-right').textContent =
+      `updated ${new Date(d.generated_unix * 1000).toLocaleTimeString()}`;
+    el.textContent = '';
+    draw();
+  } catch (e) {
+    const api = (e instanceof TypeError) ? '' : ` (is ${API_BASE} reachable?)`;
+    el.textContent = `failed: ${e.message}${api}`;
+  }
+}
+
+function draw() {
+  const ctx = document.getElementById('chart').getContext('2d');
+  const ds = [];
+  for (const leg of LEGS) {
+    if (!visible.has(leg.key) || !latest || !latest[leg.key]) continue;
+    const L = latest[leg.key];
+    const vals = L.p50.filter(v => v !== null);
+    const thr = spikeThreshold(vals);
+    // spike markers as scatter points on the max series
+    const spikes = [];
+    L.times.forEach((t, i) => {
+      if (L.max[i] !== null && L.max[i] >= thr) spikes.push({ x: t, y: L.max[i] });
+    });
+    ds.push({
+      label: leg.label,
+      data: L.times.map((t, i) => ({ x: t, y: L.p50[i] })),
+      borderColor: leg.color,
+      backgroundColor: leg.color + '22',
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0,
+      spanGaps: false,
+      order: 2,
+    });
+    ds.push({
+      label: leg.label + ' band',
+      data: L.times.map((t, i) => ({ x: t, y: L.max[i] })),
+      borderColor: 'transparent',
+      backgroundColor: leg.color + '18',
+      borderWidth: 0,
+      pointRadius: 0,
+      fill: '+1',
+      order: 3,
+    });
+    ds.push({
+      label: leg.label + ' spikes',
+      data: spikes,
+      borderColor: '#ffb74d',
+      backgroundColor: '#ffb74d',
+      pointRadius: 3.5,
+      pointStyle: 'circle',
+      showLine: false,
+      order: 1,
+    });
+  }
+
+  const t0 = Math.min(...LEGS.filter(l => latest && latest[l.key]).map(l => latest[l.key].times[0] || Infinity));
+  const t1 = Math.max(...LEGS.filter(l => latest && latest[l.key]).map(l => latest[l.key].times.at(-1) || 0));
+  const data = { datasets: ds };
+  const opts = {
+    interaction: { mode: 'nearest', axis: 'x', intersect: false },
+    scales: {
+      x: {
+        type: 'time',
+        min: t0, max: t1,
+        time: { displayFormats: { hour: 'ddd HH:mm', day: 'MMM d' } },
+        ticks: { color: '#777', maxRotation: 0, autoSkipPadding: 24 },
+        grid: { color: '#262626' },
+      },
+      y: {
+        type: scale,
+        ticks: { color: '#777', callback: v => v + 'ms' },
+        grid: { color: '#262626' },
+        title: { display: true, text: 'pong (ms)', color: '#777' },
+      },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#222',
+        borderColor: '#3a3a3a',
+        borderWidth: 1,
+        titleColor: '#fff',
+        bodyColor: '#ccc',
+        callbacks: {
+          title: items => new Date(items[0].parsed.x).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+          label: item => {
+            const name = item.dataset.label;
+            if (name.endsWith('spikes') || name.endsWith('band')) return null;
+            const legKey = LEGS.find(l => name.startsWith(l.label))?.key;
+            const L = latest[legKey];
+            const i = L.times.indexOf(item.parsed.x);
+            if (i < 0) return null;
+            const pct = (name === 'Player path (sum)')
+              ? ` ok ${L.ok[i]}%`
+              : ` \u00b7 ok ${L.ok[i]}% \u00b7 max ${fmt(L.max[i])} \u00b7 fails ${L.fails[i]}`;
+            return ` ${name}: ${fmt(item.parsed.y)}${pct}`;
+          },
+          filter: i => i.dataset.label && !i.dataset.label.endsWith('band') && !i.dataset.label.endsWith('spikes'),
+        },
+      },
+    },
+  };
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, { type: 'line', data, options: opts });
+}
+
+function fmt(v) { return v === null || v === undefined ? '—' : (Math.round(v * 10) / 10) + 'ms'; }
+
+buildControls();
+load();
+setInterval(() => { if (range <= 6) load(); }, 60000);
+</script>
+</body>
+</html>
