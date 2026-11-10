@@ -159,11 +159,13 @@
 const API_BASE = new URLSearchParams(location.search).get('api') || 'https://ping.walter7.lol';
 
 const LEGS = [
-  { key: 'syd_vultr',      label: 'Syd \u2192 Vultr',        color: '#7ec8ff', control: false, def: true },
-  { key: 'vultr_hypixel',  label: 'Vultr \u2192 Hypixel',    color: '#f48fb1', control: false, def: true },
-  { key: 'player',         label: 'Player path (sum)',       color: '#ffffff', control: false, def: false },
+  { key: 'syd_vultr',      label: 'HH Syd \u2192 HH Chi',        color: '#7ec8ff', control: false, def: true },
+  { key: 'chi_hypixel',    label: 'HH Chi \u2192 Hypixel',       color: '#f48fb1', control: false, def: true },
+  { key: 'player',         label: 'Player path (HH chain)',       color: '#ffffff', control: false, def: false },
+  { key: 'vultr_hypixel',  label: 'Vultr \u2192 Hypixel (legacy)', color: '#f8bbd0', control: true,  def: false },
   { key: 'syd_control',    label: 'Syd \u2192 CubeCraft',    color: '#9be29b', control: true,  def: false },
   { key: 'vultr_control',  label: 'Vultr \u2192 CubeCraft',  color: '#ffd54f', control: true,  def: false },
+  { key: 'chi_control',    label: 'Chi \u2192 CubeCraft',    color: '#ffab91', control: true,  def: false },
 ];
 
 const RANGES = [ ['1h', 1], ['6h', 6], ['24h', 24], ['48h', 48], ['7d', 168] ];
