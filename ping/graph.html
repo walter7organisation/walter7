@@ -166,6 +166,16 @@ const LEGS = [
   { key: 'syd_control',    label: 'Syd \u2192 CubeCraft',    color: '#9be29b', control: true,  def: false },
   { key: 'vultr_control',  label: 'Vultr \u2192 CubeCraft',  color: '#ffd54f', control: true,  def: false },
   { key: 'chi_control',    label: 'Chi \u2192 CubeCraft',    color: '#ffab91', control: true,  def: false },
+  // CF/non-CF discriminator controls (tcp-ping, pure TCP connect)
+  { key: 'vultr_cfdns',    label: 'Vultr \u2192 CF 1.1.1.1', color: '#b39ddb', control: true,  def: false },
+  { key: 'vultr_cfweb',    label: 'Vultr \u2192 CF web',     color: '#4dd0e1', control: true,  def: false },
+  { key: 'vultr_aws',      label: 'Vultr \u2192 AWS',        color: '#c5e1a5', control: true,  def: false },
+  { key: 'syd_cfdns',      label: 'Syd \u2192 CF 1.1.1.1',   color: '#9575cd', control: true,  def: false },
+  { key: 'syd_cfweb',      label: 'Syd \u2192 CF web',      color: '#26a69a', control: true,  def: false },
+  { key: 'syd_aws',        label: 'Syd \u2192 AWS',         color: '#aed581', control: true,  def: false },
+  { key: 'chi_cfdns',      label: 'Chi \u2192 CF 1.1.1.1',   color: '#ce93d8', control: true,  def: false },
+  { key: 'chi_cfweb',      label: 'Chi \u2192 CF web',      color: '#80deea', control: true,  def: false },
+  { key: 'chi_aws',        label: 'Chi \u2192 AWS',         color: '#dce775', control: true,  def: false },
 ];
 
 const RANGES = [ ['1h', 1], ['6h', 6], ['24h', 24], ['48h', 48], ['7d', 168] ];
