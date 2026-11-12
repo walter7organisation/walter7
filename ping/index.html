@@ -224,7 +224,7 @@
     function overallDot(data) {
       var dot = document.getElementById('statusDot');
       var worst = 'ok';
-      ['syd_vultr', 'chi_hypixel'].forEach(function (k) {
+      ['syd_vultr', 'vultr_hypixel'].forEach(function (k) {
         var s = data.legs[k];
         if (!s) { worst = 'down'; return; }
         if (!s.last_ok) worst = 'down';
@@ -238,14 +238,17 @@
       var l = data.legs;
       if (l.syd_vultr && !l.syd_vultr.error)
         html += legHtml(l.syd_vultr.name, l.syd_vultr, false);
-      else html += '<div class="banner"><div class="banner-title">Sydney -> Chicago (HH)</div><div class="banner-ping down">no data</div></div>';
-      if (l.chi_hypixel && !l.chi_hypixel.error)
-        html += legHtml(l.chi_hypixel.name, l.chi_hypixel, false);
-      else html += '<div class="banner"><div class="banner-title">Chicago (HH) -> Hypixel</div><div class="banner-ping down">no data</div></div>';
+      else html += '<div class="banner"><div class="banner-title">Sydney -> Vultr</div><div class="banner-ping down">no data</div></div>';
+      if (l.vultr_hypixel && !l.vultr_hypixel.error)
+        html += legHtml(l.vultr_hypixel.name, l.vultr_hypixel, false);
+      else html += '<div class="banner"><div class="banner-title">Vultr -> Hypixel</div><div class="banner-ping down">no data</div></div>';
+      if (l.syd_hhchi && !l.syd_hhchi.error)
+        html += legHtml(l.syd_hhchi.name, l.syd_hhchi, false);
+      else html += '<div class="banner"><div class="banner-title">Sydney -> HH Chicago (control)</div><div class="banner-ping down">no data</div></div>';
       if (data.player_path && data.player_path.last_ms != null)
         html += legHtml(data.player_path.name, {
           last_ok: true, last_ms: data.player_path.last_ms,
-          last_age_s: Math.max((l.syd_vultr || {}).last_age_s || 0, (l.chi_hypixel || {}).last_age_s || 0),
+          last_age_s: Math.max((l.syd_vultr || {}).last_age_s || 0, (l.vultr_hypixel || {}).last_age_s || 0),
           avg_1h: data.player_path.avg_1h, avg_24h: data.player_path.avg_24h,
           avg_7d: data.player_path.avg_7d, max_24h: null, min_24h: null,
           ok_24h: null, spark: null
